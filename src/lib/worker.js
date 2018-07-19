@@ -107,7 +107,6 @@ var inReplicaSet = function(db, pods, status, done) {
   //If we're already in a rs and NO ONE is a primary, elect someone to do the work for a primary
   var members = status.members;
 
-  var primaryExists = false;
   for (var i in members) {
     var member = members[i];
 
@@ -116,14 +115,8 @@ var inReplicaSet = function(db, pods, status, done) {
         return primaryWork(db, pods, members, false, done);
       }
 
-      primaryExists = true;
       break;
     }
-  }
-
-  if (!primaryExists && podElection(pods)) {
-    console.log('Pod has been elected as a secondary to do primary work');
-    return primaryWork(db, pods, members, true, done);
   }
 
   done();
