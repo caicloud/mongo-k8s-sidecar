@@ -50,7 +50,7 @@ var workloop = function workloop() {
     var pods = results[0];
     var notRunning = false;
 
-    //Lets remove any pods that aren't running or haven't been assigned an IP address yet
+    // Lets wait for any pending pod or haven't been assigned an IP address yet
     for (var i = pods.length - 1; i >= 0; i--) {
       var pod = pods[i];
       if (pod.status.phase !== 'Running' || !pod.status.podIP) {
@@ -124,14 +124,11 @@ var primaryWork = function(db, pods, members, shouldForce, done) {
   //Loop over all the pods we have and see if any of them aren't in the current rs members array
   //If they aren't in there, add them
   var addrToAdd = addrToAddLoop(pods, members);
-  var addrToRemove = [];
-  // var addrToRemove = addrToRemoveLoop(members);
 
-  if (addrToAdd.length || addrToRemove.length) {
+  if (addrToAdd.length) {
     console.log('Addresses to add:    ', addrToAdd);
-    console.log('Addresses to remove: ', addrToRemove);
 
-    mongo.addNewReplSetMembers(db, addrToAdd, addrToRemove, shouldForce, done);
+    mongo.addNewReplSetMembers(db, addrToAdd, [], shouldForce, done);
     return;
   }
 
@@ -198,9 +195,8 @@ var invalidReplicaSet = function(db, pods, status, done) {
 
   console.log("Won the pod election, forcing re-initialization");
   var addrToAdd = addrToAddLoop(pods, members);
-  var addrToRemove = addrToRemoveLoop(members);
 
-  mongo.addNewReplSetMembers(db, addrToAdd, addrToRemove, true, function(err) {
+  mongo.addNewReplSetMembers(db, addrToAdd, [], true, function(err) {
     done(err);
   });
 };
@@ -249,22 +245,6 @@ var addrToAddLoop = function(pods, members) {
     }
   }
   return addrToAdd;
-};
-
-var addrToRemoveLoop = function(members) {
-    var addrToRemove = [];
-    for (var i in members) {
-        var member = members[i];
-        if (memberShouldBeRemoved(member)) {
-            addrToRemove.push(member.name);
-        }
-    }
-    return addrToRemove;
-};
-
-var memberShouldBeRemoved = function(member) {
-    return !member.health
-        && moment().subtract(unhealthySeconds, 'seconds').isAfter(member.lastHeartbeatRecv);
 };
 
 /**
