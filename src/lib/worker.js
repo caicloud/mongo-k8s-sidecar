@@ -48,16 +48,18 @@ var workloop = function workloop() {
     }
 
     var pods = results[0];
+    var notRunning = false;
 
     //Lets remove any pods that aren't running or haven't been assigned an IP address yet
     for (var i = pods.length - 1; i >= 0; i--) {
       var pod = pods[i];
       if (pod.status.phase !== 'Running' || !pod.status.podIP) {
-        pods.splice(i, 1);
+        notRunning = true;
+        break;
       }
     }
 
-    if (!pods.length) {
+    if (notRunning || !pods.length) {
       return finish('No pods are currently running, probably just give them some time.');
     }
 
@@ -107,23 +109,12 @@ var inReplicaSet = function(db, pods, status, done) {
   //If we're already in a rs and NO ONE is a primary, elect someone to do the work for a primary
   var members = status.members;
 
-  var primaryExists = false;
   for (var i in members) {
     var member = members[i];
 
-    if (member.state === 1) {
-      if (member.self) {
-        return primaryWork(db, pods, members, false, done);
-      }
-
-      primaryExists = true;
-      break;
+    if (member.state === 1 && member.self) {
+      return primaryWork(db, pods, members, false, done);
     }
-  }
-
-  if (!primaryExists && podElection(pods)) {
-    console.log('Pod has been elected as a secondary to do primary work');
-    return primaryWork(db, pods, members, true, done);
   }
 
   done();
@@ -133,7 +124,8 @@ var primaryWork = function(db, pods, members, shouldForce, done) {
   //Loop over all the pods we have and see if any of them aren't in the current rs members array
   //If they aren't in there, add them
   var addrToAdd = addrToAddLoop(pods, members);
-  var addrToRemove = addrToRemoveLoop(members);
+  var addrToRemove = [];
+  // var addrToRemove = addrToRemoveLoop(members);
 
   if (addrToAdd.length || addrToRemove.length) {
     console.log('Addresses to add:    ', addrToAdd);
