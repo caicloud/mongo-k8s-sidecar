@@ -109,9 +109,7 @@ var inReplicaSet = function(db, pods, status, done) {
   //If we're already in a rs and NO ONE is a primary, elect someone to do the work for a primary
   var members = status.members;
 
-  for (var i in members) {
-    var member = members[i];
-
+  for (var member of members) {
     if (member.state === 1 && member.self) {
       return primaryWork(db, pods, members, false, done);
     }
@@ -145,9 +143,7 @@ var notInReplicaSet = function(db, pods, done) {
   //If we're not in a rs and others ARE in the rs, just continue, another path will ensure we will get added
   //If we're not in a rs and no one else is in a rs, elect one to kick things off
   var testRequests = [];
-  for (var i in pods) {
-    var pod = pods[i];
-
+  for (var pod of pods) {
     if (pod.status.phase === 'Running') {
       testRequests.push(createTestRequest(pod));
     }
@@ -158,8 +154,8 @@ var notInReplicaSet = function(db, pods, done) {
       return done(err);
     }
 
-    for (var i in results) {
-      if (results[i]) {
+    for (var result of results) {
+      if (result) {
         return done(); //There's one in a rs, nothing to do
       }
     }
@@ -218,8 +214,7 @@ var podElection = function(pods) {
 
 var addrToAddLoop = function(pods, members) {
   var addrToAdd = [];
-  for (var i in pods) {
-    var pod = pods[i];
+  for (var pod of pods) {
     if (pod.status.phase !== 'Running' || pod.status.reason === 'NodeLost') {
       continue;
     }
@@ -228,8 +223,7 @@ var addrToAddLoop = function(pods, members) {
     var podStableNetworkAddr = getPodStableNetworkAddressAndPort(pod);
     var podInRs = false;
 
-    for (var j in members) {
-      var member = members[j];
+    for (var member of members) {
       if (member.name === podIpAddr || member.name === podStableNetworkAddr) {
         /* If we have the pod's ip or the stable network address already in the config, no need to read it. Checks both the pod IP and the
         * stable network ID - we don't want any duplicates - either one of the two is sufficient to consider the node present. */
