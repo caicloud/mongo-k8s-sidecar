@@ -8,7 +8,6 @@ var dns = require('dns');
 var os = require('os');
 
 var loopSleepSeconds = config.loopSleepSeconds;
-var unhealthySeconds = config.unhealthySeconds;
 
 var hostIp = false;
 var hostIpAndPort = false;

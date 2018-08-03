@@ -109,7 +109,6 @@ module.exports = {
   password: process.env.MONGODB_PASSWORD,
   database: process.env.MONGODB_DATABASE || 'local',
   loopSleepSeconds: process.env.MONGO_SIDECAR_SLEEP_SECONDS || 5,
-  unhealthySeconds: process.env.MONGO_SIDECAR_UNHEALTHY_SECONDS || 15,
   mongoSSLEnabled: stringToBool(process.env.MONGO_SSL_ENABLED),
   mongoSSLAllowInvalidCertificates: stringToBool(process.env.MONGO_SSL_ALLOW_INVALID_CERTIFICATES),
   mongoSSLAllowInvalidHostnames: stringToBool(process.env.MONGO_SSL_ALLOW_INVALID_HOSTNAMES),
