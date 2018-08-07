@@ -8,7 +8,6 @@ var dns = require('dns');
 var os = require('os');
 
 var loopSleepSeconds = config.loopSleepSeconds;
-var unhealthySeconds = config.unhealthySeconds;
 
 var hostIp = false;
 var hostIpAndPort = false;
@@ -48,16 +47,18 @@ var workloop = function workloop() {
     }
 
     var pods = results[0];
+    var notRunning = false;
 
-    //Lets remove any pods that aren't running or haven't been assigned an IP address yet
+    // Lets wait for any pending pod or haven't been assigned an IP address yet
     for (var i = pods.length - 1; i >= 0; i--) {
       var pod = pods[i];
       if (pod.status.phase !== 'Running' || !pod.status.podIP) {
-        pods.splice(i, 1);
+        notRunning = true;
+        break;
       }
     }
 
-    if (!pods.length) {
+    if (notRunning || !pods.length) {
       return finish('No pods are currently running, probably just give them some time.');
     }
 
@@ -107,23 +108,10 @@ var inReplicaSet = function(db, pods, status, done) {
   //If we're already in a rs and NO ONE is a primary, elect someone to do the work for a primary
   var members = status.members;
 
-  var primaryExists = false;
-  for (var i in members) {
-    var member = members[i];
-
-    if (member.state === 1) {
-      if (member.self) {
-        return primaryWork(db, pods, members, false, done);
-      }
-
-      primaryExists = true;
-      break;
+  for (var member of members) {
+    if (member.state === 1 && member.self) {
+      return primaryWork(db, pods, members, false, done);
     }
-  }
-
-  if (!primaryExists && podElection(pods)) {
-    console.log('Pod has been elected as a secondary to do primary work');
-    return primaryWork(db, pods, members, true, done);
   }
 
   done();
@@ -133,13 +121,11 @@ var primaryWork = function(db, pods, members, shouldForce, done) {
   //Loop over all the pods we have and see if any of them aren't in the current rs members array
   //If they aren't in there, add them
   var addrToAdd = addrToAddLoop(pods, members);
-  var addrToRemove = addrToRemoveLoop(members);
 
-  if (addrToAdd.length || addrToRemove.length) {
+  if (addrToAdd.length) {
     console.log('Addresses to add:    ', addrToAdd);
-    console.log('Addresses to remove: ', addrToRemove);
 
-    mongo.addNewReplSetMembers(db, addrToAdd, addrToRemove, shouldForce, done);
+    mongo.addNewReplSetMembers(db, addrToAdd, [], shouldForce, done);
     return;
   }
 
@@ -156,9 +142,7 @@ var notInReplicaSet = function(db, pods, done) {
   //If we're not in a rs and others ARE in the rs, just continue, another path will ensure we will get added
   //If we're not in a rs and no one else is in a rs, elect one to kick things off
   var testRequests = [];
-  for (var i in pods) {
-    var pod = pods[i];
-
+  for (var pod of pods) {
     if (pod.status.phase === 'Running') {
       testRequests.push(createTestRequest(pod));
     }
@@ -169,8 +153,8 @@ var notInReplicaSet = function(db, pods, done) {
       return done(err);
     }
 
-    for (var i in results) {
-      if (results[i]) {
+    for (var result of results) {
+      if (result) {
         return done(); //There's one in a rs, nothing to do
       }
     }
@@ -206,9 +190,8 @@ var invalidReplicaSet = function(db, pods, status, done) {
 
   console.log("Won the pod election, forcing re-initialization");
   var addrToAdd = addrToAddLoop(pods, members);
-  var addrToRemove = addrToRemoveLoop(members);
 
-  mongo.addNewReplSetMembers(db, addrToAdd, addrToRemove, true, function(err) {
+  mongo.addNewReplSetMembers(db, addrToAdd, [], true, function(err) {
     done(err);
   });
 };
@@ -230,8 +213,7 @@ var podElection = function(pods) {
 
 var addrToAddLoop = function(pods, members) {
   var addrToAdd = [];
-  for (var i in pods) {
-    var pod = pods[i];
+  for (var pod of pods) {
     if (pod.status.phase !== 'Running' || pod.status.reason === 'NodeLost') {
       continue;
     }
@@ -240,8 +222,7 @@ var addrToAddLoop = function(pods, members) {
     var podStableNetworkAddr = getPodStableNetworkAddressAndPort(pod);
     var podInRs = false;
 
-    for (var j in members) {
-      var member = members[j];
+    for (var member of members) {
       if (member.name === podIpAddr || member.name === podStableNetworkAddr) {
         /* If we have the pod's ip or the stable network address already in the config, no need to read it. Checks both the pod IP and the
         * stable network ID - we don't want any duplicates - either one of the two is sufficient to consider the node present. */
@@ -257,22 +238,6 @@ var addrToAddLoop = function(pods, members) {
     }
   }
   return addrToAdd;
-};
-
-var addrToRemoveLoop = function(members) {
-    var addrToRemove = [];
-    for (var i in members) {
-        var member = members[i];
-        if (memberShouldBeRemoved(member)) {
-            addrToRemove.push(member.name);
-        }
-    }
-    return addrToRemove;
-};
-
-var memberShouldBeRemoved = function(member) {
-    return !member.health
-        && moment().subtract(unhealthySeconds, 'seconds').isAfter(member.lastHeartbeatRecv);
 };
 
 /**
