@@ -5,11 +5,11 @@ _config:
     template:
       type: template.caicloud.io/application
       version: 1.0.0
-    version: "v0.0.3"
+    version: "v0.0.4"
   controllers:
   - containers:
     - name: mongo
-      image: '[[ registry_release ]]/mongo:3.6.5'
+      image: '[[ registry_library ]]/mongo:3.6.5'
       probe:
         liveness:
           threshold:
