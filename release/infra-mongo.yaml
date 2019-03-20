@@ -5,24 +5,41 @@ _config:
     template:
       type: template.caicloud.io/application
       version: 1.0.0
-    version: "v0.0.4"
+    version: "v0.0.5"
   controllers:
   - containers:
     - name: mongo
       image: '[[ registry_library ]]/mongo:3.6.5'
+      imagePullPolicy: IfNotPresent
       probe:
         liveness:
+          handler:
+            type: EXEC
+            method:
+              command:
+                - mongo
+                - --eval
+                - "db.adminCommand('ping')"
           threshold:
             success: 1
-            failure: 3
-          delay: 15
-          period: 20
+            failure: 6
+          delay: 30
+          period: 10
+          timeout: 5
+        readiness:
           handler:
-            type: TCP
+            type: EXEC
             method:
-              port: 27017
-          timeout: 1
-      imagePullPolicy: IfNotPresent
+              command:
+                - mongo
+                - --eval
+                - "db.adminCommand('ping')"
+          threshold:
+            success: 1
+            failure: 6
+          delay: 5
+          period: 10
+          timeout: 5
       args:
       - mongod
       - "--replSet"
@@ -65,5 +82,8 @@ _config:
     volumes:
     - name: mongo-storage
       source:
-        path: /var/lib/compass/db/mongo
-      type: HostPath
+        modes:
+        - ReadWriteMany
+      type: Dedicated
+      storage:
+        request: 50Gi
