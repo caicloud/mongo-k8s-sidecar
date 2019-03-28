@@ -65,25 +65,28 @@ _config:
       - name: KUBERNETES_MONGO_SERVICE_NAME
         value: mgo-cluster
     schedule:
-      antiaffinity:
-        pod:
-          terms:
-          - selector:
-              labels:
-                k8s-app: mongo
-            topologyKey: kubernetes.io/hostname
-          type: Required
+      # Remove pod antiaffinity as we use local volume with node affinity.
+      # antiaffinity:
+      #   pod:
+      #     terms:
+      #     - selector:
+      #         labels:
+      #           k8s-app: mongo
+      #       topologyKey: kubernetes.io/hostname
+      #     type: Required
       labels:
         k8s-app: mongo
     controller:
       replica: 3
       domain: mgo-cluster
+    pod:
+      priorityClassName: system-cluster-critical
     type: StatefulSet
     volumes:
     - name: mongo-storage
       source:
         modes:
-        - ReadWriteMany
+        - ReadWriteOnce
       type: Dedicated
       storage:
         request: 50Gi
