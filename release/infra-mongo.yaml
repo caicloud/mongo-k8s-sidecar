@@ -22,9 +22,9 @@ _config:
                 - "db.adminCommand('ping')"
           threshold:
             success: 1
-            failure: 6
+            failure: 40
           delay: 30
-          period: 10
+          period: 15
           timeout: 5
         readiness:
           handler:
