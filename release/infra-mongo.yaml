@@ -5,24 +5,41 @@ _config:
     template:
       type: template.caicloud.io/application
       version: 1.0.0
-    version: "v0.0.4"
+    version: "v0.0.5"
   controllers:
   - containers:
     - name: mongo
       image: '[[ registry_library ]]/mongo:3.6.5'
+      imagePullPolicy: IfNotPresent
       probe:
         liveness:
+          handler:
+            type: EXEC
+            method:
+              command:
+                - mongo
+                - --eval
+                - "db.adminCommand('ping')"
           threshold:
             success: 1
-            failure: 3
-          delay: 15
-          period: 20
+            failure: 40
+          delay: 30
+          period: 15
+          timeout: 5
+        readiness:
           handler:
-            type: TCP
+            type: EXEC
             method:
-              port: 27017
-          timeout: 1
-      imagePullPolicy: IfNotPresent
+              command:
+                - mongo
+                - --eval
+                - "db.adminCommand('ping')"
+          threshold:
+            success: 1
+            failure: 6
+          delay: 5
+          period: 10
+          timeout: 5
       args:
       - mongod
       - "--replSet"
@@ -48,22 +65,28 @@ _config:
       - name: KUBERNETES_MONGO_SERVICE_NAME
         value: mgo-cluster
     schedule:
-      antiaffinity:
-        pod:
-          terms:
-          - selector:
-              labels:
-                k8s-app: mongo
-            topologyKey: kubernetes.io/hostname
-          type: Required
+      # Remove pod antiaffinity as we use local volume with node affinity.
+      # antiaffinity:
+      #   pod:
+      #     terms:
+      #     - selector:
+      #         labels:
+      #           k8s-app: mongo
+      #       topologyKey: kubernetes.io/hostname
+      #     type: Required
       labels:
         k8s-app: mongo
     controller:
       replica: 3
       domain: mgo-cluster
+    pod:
+      priorityClassName: system-cluster-critical
     type: StatefulSet
     volumes:
     - name: mongo-storage
       source:
-        path: /var/lib/compass/db/mongo
-      type: HostPath
+        modes:
+        - ReadWriteOnce
+      type: Dedicated
+      storage:
+        request: 50Gi
