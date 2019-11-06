@@ -5,12 +5,19 @@ _config:
     template:
       type: template.caicloud.io/application
       version: 1.0.0
-    version: "v0.0.5"
+    version: "v0.0.6"
   controllers:
   - containers:
     - name: mongo
       image: '[[ registry_library ]]/mongo:3.6.5'
       imagePullPolicy: IfNotPresent
+      resources:
+        limits:
+          cpu: 500m
+          memory: 8Gi
+        requests:
+          cpu: 100m
+          memory: 200Mi
       probe:
         liveness:
           handler:
@@ -57,6 +64,13 @@ _config:
     - name: mongo-sidecar
       image: '[[ registry_release ]]/mongo-k8s-sidecar:v0.0.3'
       imagePullPolicy: IfNotPresent
+      resources:
+        limits:
+          cpu: 50m
+          memory: 200Mi
+        requests:
+          cpu: 10m
+          memory: 100Mi
       env:
       - name: MONGO_SIDECAR_POD_LABELS
         value: "controller.caicloud.io/release=infra-mongo"
@@ -80,7 +94,7 @@ _config:
       replica: 3
       domain: mgo-cluster
     pod:
-      priorityClassName: system-cluster-critical
+      priorityClassName: platform-system-critical
     type: StatefulSet
     volumes:
     - name: mongo-storage
