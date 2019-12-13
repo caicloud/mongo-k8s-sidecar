@@ -14,9 +14,11 @@ _config:
         value: mgo-cluster
       - name: BACKUP_SLEEP
         value: "43200"
+      - name: BACKUP_LIMIT
+        value: "60"
       - name: BACKUP_DIR
         value: /backup
-      image: '[[ registry_release ]]/mongo-backup:v1.0.0'
+      image: '[[ registry_release ]]/mongo-backup:v1.0.1'
       imagePullPolicy: IfNotPresent
       mounts:
       - name: bak-storage
