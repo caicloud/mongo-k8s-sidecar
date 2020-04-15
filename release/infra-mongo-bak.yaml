@@ -37,5 +37,5 @@ _config:
         modes:
         - ReadWriteMany
       storage:
-        request: 100Gi
-        limit: 100Gi
+        request: 15Gi
+        limit: 15Gi
