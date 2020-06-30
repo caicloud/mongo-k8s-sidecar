@@ -5,47 +5,50 @@ _config:
     template:
       type: template.caicloud.io/application
       version: 1.0.0
-    version: "v0.0.9"
+    version: "v0.0.10"
   controllers:
   - containers:
     - name: mongo
       image: '[[ registry_library ]]/mongo:3.6.13'
       imagePullPolicy: IfNotPresent
       resources:
+        # Starting in MongoDB 3.4, the default WiredTiger internal cache size is the larger of either:
+        # 50% of (RAM - 1 GB), or 256 MB.
         limits:
-          memory: 8Gi
+          memory: 5Gi
         requests:
           cpu: 100m
           memory: 2Gi
-      probe:
-        liveness:
-          handler:
-            type: EXEC
-            method:
-              command:
-                - mongo
-                - --eval
-                - "db.adminCommand('ping')"
-          threshold:
-            success: 1
-            failure: 40
-          delay: 30
-          period: 15
-          timeout: 5
-        readiness:
-          handler:
-            type: EXEC
-            method:
-              command:
-                - mongo
-                - --eval
-                - "db.adminCommand('ping')"
-          threshold:
-            success: 1
-            failure: 6
-          delay: 5
-          period: 10
-          timeout: 5
+      # Remove probe as it can make mongo unable to start in extreme situation
+      # probe:
+      #   liveness:
+      #     handler:
+      #       type: EXEC
+      #       method:
+      #         command:
+      #           - mongo
+      #           - --eval
+      #           - "db.adminCommand('ping')"
+      #     threshold:
+      #       success: 1
+      #       failure: 40
+      #     delay: 30
+      #     period: 15
+      #     timeout: 5
+      #   readiness:
+      #     handler:
+      #       type: EXEC
+      #       method:
+      #         command:
+      #           - mongo
+      #           - --eval
+      #           - "db.adminCommand('ping')"
+      #     threshold:
+      #       success: 1
+      #       failure: 6
+      #     delay: 5
+      #     period: 10
+      #     timeout: 5
       args:
       - mongod
       - "--replSet"
