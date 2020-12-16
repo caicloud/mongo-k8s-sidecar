@@ -1,6 +1,7 @@
 platformConfig:
   imageRegistry: cargo.dev.caicloud.xyz
-  imageRepositoryRelease: library
+  imageRepositoryLibrary: library
+  imageRepositoryRelease: release
   imagePullPolicy: Always
 
 image:

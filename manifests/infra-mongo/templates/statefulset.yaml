@@ -31,7 +31,7 @@ spec:
       {{- end }}
       containers:
       - name: {{ .Chart.Name }}
-        image: {{ include "common.images.image" (dict "context" $ "repository" .Values.platformConfig.imageRepositoryRelease "imageRoot" .Values.image) | quote }}
+        image: {{ include "common.images.image" (dict "context" $ "repository" .Values.platformConfig.imageRepositoryLibrary "imageRoot" .Values.image) | quote }}
         imagePullPolicy: {{ default "Always" .Values.platformConfig.imagePullPolicy | quote }}
         {{- if .Values.command }}
         command: {{- include "common.tplvalues.render" ( dict "value" .Values.command "context" $) | nindent 8 }}
