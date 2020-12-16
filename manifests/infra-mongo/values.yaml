@@ -9,7 +9,7 @@ image:
   # tag:
 
 serverPort: 27017
-# priorityClassName: platform-system-critical
+priorityClassName: system-cluster-critical
 replicaCount: 3
 serviceName: mgo-cluster
 
