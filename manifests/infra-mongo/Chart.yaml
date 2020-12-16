@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 4.0.3
+description: A helm chart for mongo
+name: infra-mongo
+type: application
+version: 4.0.3

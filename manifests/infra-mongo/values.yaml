@@ -1,0 +1,74 @@
+platformConfig:
+  imageRegistry: cargo.dev.caicloud.xyz
+  imageRepositoryLibrary: library
+  imageRepositoryRelease: release
+  imagePullPolicy: Always
+
+image:
+  name: mongo
+  # tag:
+
+serverPort: 27017
+priorityClassName: system-cluster-critical
+replicaCount: 3
+serviceName: mgo-cluster
+
+persistence:
+  enabled: true
+  storageClass:
+  accessModes:
+  - ReadWriteOnce
+  size: 50Gi
+  mountPath: /data/db
+
+resources:
+  limits:
+    memory: 5Gi
+    cpu: 500m
+  requests:
+    memory: 2Gi
+    cpu: 100m
+
+sidecar:
+  image:
+    name: mongo-k8s-sidecar
+    tag: v0.0.9
+  resources:
+    requests:
+      cpu: 20m
+      memory: 100Mi
+    limits:
+      cpu: 50m
+      memory: 200Mi
+
+## String to partially override aspnet-core.fullname template (will maintain the release name)
+##
+# nameOverride:
+
+## String to fully override aspnet-core.fullname template
+##
+# fullnameOverride:
+
+## Command and args for running the container (set to default if not set). Use array form
+##
+# command: []
+# args: []
+
+## Add labels to all the deployed resources
+##
+# commonLabels: {}
+
+## Add annotations to all the deployed resources
+##
+# commonAnnotations: {}
+
+## Pod labels
+## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+##
+# podLabels: {}
+
+## Pod annotations
+## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+##
+# podAnnotations: {}
+
