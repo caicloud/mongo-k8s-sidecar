@@ -11,7 +11,7 @@ metadata:
   annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
 spec:
-  serviceName: {{ .Values.serviceName }}
+  serviceName: {{ .Values.serviceName | quote }}
   selector:
     matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
   replicas: {{ default 1 .Values.replicaCount }}
@@ -72,7 +72,7 @@ spec:
         - name: "MONGO_PORT"
           value: {{ .Values.serverPort | quote }}
         - name: "KUBERNETES_MONGO_SERVICE_NAME"
-          value: {{ .Values.serviceName }}
+          value: {{ .Values.serviceName | quote }}
         {{- if .Values.sidecar.resources }}
         resources: {{- toYaml .Values.sidecar.resources | nindent 10 }}
         {{- end }}
