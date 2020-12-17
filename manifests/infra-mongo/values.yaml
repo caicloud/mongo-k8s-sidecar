@@ -6,7 +6,7 @@ platformConfig:
 
 image:
   name: mongo
-  # tag:
+  tag: 4.0.3
 
 serverPort: 27017
 priorityClassName: system-cluster-critical
