@@ -33,20 +33,29 @@ spec:
       - name: {{ .Chart.Name }}
         image: {{ include "common.images.image" (dict "context" $ "repository" .Values.platformConfig.imageRepositoryLibrary "imageRoot" .Values.image) | quote }}
         imagePullPolicy: {{ default "Always" .Values.platformConfig.imagePullPolicy | quote }}
-        {{- if .Values.command }}
-        command: {{- include "common.tplvalues.render" ( dict "value" .Values.command "context" $) | nindent 8 }}
-        {{- else }}
-        command:
-        - "mongod"
-        {{- end }}
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-config
+              key: user
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-config
+              key: password
         {{- if .Values.args }}
         args: {{- include "common.tplvalues.render" ( dict "value" .Values.args "context" $) | nindent 8 }}
         {{- else }}
         args:
-        - "--replSet"
-        - "rs0"
-        - "--bind_ip"
-        - "0.0.0.0"
+        - --replSet
+        - rs0
+        - --bind_ip
+        - 0.0.0.0
+        - --clusterAuthMode
+        - keyFile
+        - --keyFile
+        - /data/config/mongodb-keyfile
         {{- end }}
         {{- if .Values.serverPort }}
         ports:
@@ -73,6 +82,18 @@ spec:
           value: {{ .Values.serverPort | quote }}
         - name: "KUBERNETES_MONGO_SERVICE_NAME"
           value: {{ .Values.serviceName | quote }}
+        - name: MONGODB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-config
+              key: user
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-config
+              key: password
+        - name: MONGODB_DATABASE
+          value: admin
         {{- if .Values.sidecar.resources }}
         resources: {{- toYaml .Values.sidecar.resources | nindent 10 }}
         {{- end }}
