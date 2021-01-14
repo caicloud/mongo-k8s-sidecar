@@ -14,7 +14,7 @@ spec:
   serviceName: {{ .Values.serviceName | quote }}
   selector:
     matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
-  replicas: {{ default 1 .Values.replicaCount }}
+  replicas: {{ len .Values.platformConfig.mongoHosts }}
   template:
     metadata:
       labels: {{- include "common.labels.standard" . | nindent 8 }}

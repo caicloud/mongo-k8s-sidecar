@@ -3,6 +3,10 @@ platformConfig:
   imageRepositoryLibrary: library
   imageRepositoryRelease: release
   imagePullPolicy: Always
+  mongoHosts:
+  - kube-master-1
+  - kube-master-2
+  - kube-master-3
 
 image:
   name: mongo
@@ -10,7 +14,6 @@ image:
 
 serverPort: 27017
 priorityClassName: system-cluster-critical
-replicaCount: 3
 serviceName: mgo-cluster
 
 persistence:
