@@ -1,4 +1,4 @@
-{{- range $index, $value := .Values.platformConfig.mongoHosts }}
+{{- range $index, $value := .Values.platformConfig.mongo.hosts }}
 ---
 apiVersion: v1
 kind: PersistentVolume
