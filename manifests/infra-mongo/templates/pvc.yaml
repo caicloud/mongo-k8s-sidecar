@@ -1,9 +1,9 @@
-{{- range tuple "0" "1" "2" }}
+{{- range $index, $value := .Values.platformConfig.mongoHosts }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: infra-mongo-infra-mongo-{{ . }}
+  name: infra-mongo-infra-mongo-{{ $index }}
   namespace: {{ $.Release.Namespace | quote }}
 spec:
   accessModes:
@@ -11,5 +11,5 @@ spec:
   resources:
     requests:
       storage: 100Gi
-  volumeName: infra-mongo-infra-mongo-{{ . }}
+  volumeName: infra-mongo-infra-mongo-{{ $index }}
 {{- end }}
